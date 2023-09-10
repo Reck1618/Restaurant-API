@@ -1,3 +1,4 @@
+from datetime import date
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, viewsets, status
@@ -136,7 +137,6 @@ class CartView(generics.ListCreateAPIView):
 class OrderView(generics.ListCreateAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         if self.request.user.is_superuser or self.request.user.groups.filter(name='Manager').exists():
@@ -148,7 +148,59 @@ class OrderView(generics.ListCreateAPIView):
         else:
             return Order.objects.none()
 
-    def create(self, request):
-        menu_item_count = Cart.objects.all().filter(user=self.request.user).count()
-        if menu_item_count == 0:
+    def check_permissions(self, request):
+        if request.method in ['GET']:
+            self.permission_classes = [IsAuthenticated]
+        elif request.method in ['POST']:
+            self.permission_classes = [IsCustomer]
+        return super().check_permissions(request)
+
+    def post(self, request):
+        items = Cart.objects.all().filter(user=self.request.user)
+        if items.count() == 0:
             return Response({"message": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
+
+        total_price = sum(item.price for item in items)
+
+        order = Order.objects.create(user=self.request.user, status=False, total=total_price, date=date.today())
+
+        for item in items.values():
+            OrderItem.objects.create(
+                order=order,
+                menu_item = MenuItem.objects.get(pk=item['menu_item_id']),
+                quantity = item['quantity'],
+                price = item['price']
+            )
+        items.delete()
+        return Response({"message": "Order placed successfully"}, status=status.HTTP_201_CREATED)
+
+class SingleOrderView(generics.ListCreateAPIView):
+    queryset = OrderItem.objects.all()
+    serializer_class = OrderItemSerializer
+
+
+    def check_permissions(self, request):
+        if request.method in ['GET']:
+            self.permission_classes = [IsAuthenticated]
+        elif request.method in ['PUT', 'DELETE']:
+            self.permission_classes = [IsAuthenticated, IsManager | IsAdminUser]
+        else:
+            self.permission_classes = [IsDeliveryCrew | IsAdminUser | IsManager]
+        return super().check_permissions(request)
+
+    def get_queryset(self):
+
+        if Order.objects.get(pk=self.kwargs['pk']):
+            queryset = OrderItem.objects.filter(order_id=self.kwargs['pk'])
+            return queryset
+        else:
+            return Response({"message": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    def patch(self, request, *args, **kwargs):
+        order = Order.objects.get(pk=self.kwargs['pk'])
+        if order:
+            order.status = not order.status
+            order.save()
+            return Response({"message": f"Order status updated #Status of #{order.id} changed to {order.status} "}, status=status.HTTP_200_OK)
+        else:
+            return Response({"message": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
