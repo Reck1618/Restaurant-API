@@ -204,3 +204,15 @@ class SingleOrderView(generics.ListCreateAPIView):
             return Response({"message": f"Order status updated #Status of #{order.id} changed to {order.status} "}, status=status.HTTP_200_OK)
         else:
             return Response({"message": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request, *args, **kwargs):
+        order = get_object_or_404(Order, pk=self.kwargs['pk'])
+        crew = get_object_or_404(User, pk=request.data['delivery_crew'])
+        order.delivery_crew = crew
+        order.save()
+        return Response({"message": f"Order #{order.id} assigned to {crew.username}"}, status=status.HTTP_200_OK)
+
+    def delete(self, request, *args, **kwargs):
+        order = get_object_or_404(Order, pk=self.kwargs['pk'])
+        order.delete()
+        return Response({"message": f"Order #{order.id} deleted"}, status=status.HTTP_200_OK)
