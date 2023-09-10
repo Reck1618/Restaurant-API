@@ -27,7 +27,7 @@ class CartSerializer(serializers.ModelSerializer):
     )
     class Meta:
         model = Cart
-        fields = ['id', 'user', 'menu_item', 'quantity', 'unit_price', 'price']
+        fields = ['user', 'menu_item', 'quantity', 'price']
 
     def validate(self, attrs):
         attrs['unit_price'] = attrs['menu_item'].price

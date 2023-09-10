@@ -1,3 +1,5 @@
+from django.db import IntegrityError
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, viewsets, status
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
@@ -10,6 +12,7 @@ from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from .pagination import LargeResultsSetPagination, StandardResultsSetPagination
 
 
+
 # Create your views here.
 class CategoriesView(generics.ListCreateAPIView):
     queryset = Category.objects.all()
@@ -17,7 +20,7 @@ class CategoriesView(generics.ListCreateAPIView):
     ordering_fields = ['title', 'slug']
     search_fields = ['title', 'slug']
 
-    # Adding Large Pagination Class
+    # Overriding default Pagination Class
     pagination_class = LargeResultsSetPagination
 
     # Check Permissions
@@ -57,7 +60,7 @@ class MenuItemView(generics.ListCreateAPIView):
             self.permission_classes = [IsManager | IsAdminUser]
         return super().check_permissions(request)
 
-    # Update FilterSet so that it can also take str as input
+    # Update FilterSet so that it can also take str(category name) as input
     def get_queryset(self):
         query_param_value = self.request.query_params.get('category')
         if query_param_value is not None:
@@ -81,3 +84,71 @@ class SingleMenuItemView(generics.RetrieveUpdateDestroyAPIView):
         else:
             self.permission_classes = [IsManager | IsAdminUser]
         return super().check_permissions(request)
+
+
+class CartView(generics.ListCreateAPIView):
+    queryset = Cart.objects.all()
+    serializer_class = CartSerializer
+    permission_classes = [IsCustomer]
+
+    def get_queryset(self):
+        return Cart.objects.all().filter(user=self.request.user)
+
+    def post(self, request, *args, **kwargs):
+        try:
+            id = request.data['menu_item']
+            quantity = 1 if 'quantity' not in request.data else request.data['quantity']
+        except KeyError:
+            return Response({"message": "Missing 'menu_item' or 'quantity' in request data"}, status=status.HTTP_400_BAD_REQUEST)
+
+        item = get_object_or_404(MenuItem, pk=id)
+        price = int(quantity) * item.price
+
+        existing_cart_item = Cart.objects.filter(user=request.user, menu_item=item).first()
+        if existing_cart_item:
+            # Item already exists, update its quantity and price
+            existing_cart_item.quantity += int(quantity)
+            existing_cart_item.price += price
+            existing_cart_item.save()
+            return Response({"message": "Item already exists in cart and it's quantity has been updated"}, status=status.HTTP_200_OK)
+
+        try:
+            Cart.objects.create(user=request.user, quantity=quantity, unit_price=item.price, price=price,
+                             menu_item=item)
+        except IntegrityError as e:
+            return Response({"message": e}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"message": "Item added to cart"},status=status.HTTP_201_CREATED)
+
+    def delete(self, request, *args, **kwargs):
+        if 'menu_item' in request.data:
+            item = get_object_or_404(MenuItem, pk=request.data['menu_item'])
+            cart_item = Cart.objects.filter(user=request.user, menu_item=item).first()
+            if cart_item:
+                cart_item.delete()
+                return Response({"message": "Item deleted from cart"}, status=status.HTTP_200_OK)
+            else:
+                return Response({"message": "Item not found in cart"}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            Cart.objects.filter(user=request.user).delete()
+            return Response({"message": "Cart cleared"}, status=status.HTTP_200_OK)
+
+class OrderView(generics.ListCreateAPIView):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.is_superuser or self.request.user.groups.filter(name='Manager').exists():
+            return Order.objects.all()
+        elif self.request.user.groups.filter(name='Customer'):
+            return Order.objects.all().filter(user=self.request.user)
+        elif self.request.user.groups.filter(name='Delivery Crew').exists():
+            return Order.objects.all().filter(delivery_crew=self.request.user)
+        else:
+            return Order.objects.none()
+
+    def create(self, request):
+        menu_item_count = Cart.objects.all().filter(user=self.request.user).count()
+        if menu_item_count == 0:
+            return Response({"message": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
