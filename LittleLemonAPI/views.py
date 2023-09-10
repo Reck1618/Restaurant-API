@@ -216,3 +216,41 @@ class SingleOrderView(generics.ListCreateAPIView):
         order = get_object_or_404(Order, pk=self.kwargs['pk'])
         order.delete()
         return Response({"message": f"Order #{order.id} deleted"}, status=status.HTTP_200_OK)
+
+class GroupViewSet(viewsets.ViewSet):
+    permission_classes = [IsAdminUser]
+    def list(self, request):
+        users = User.objects.all().filter(groups__name='Manager')
+        items = UserSerializer(users, many=True)
+        return Response(items.data)
+
+    def create(self, request):
+        user = get_object_or_404(User, username=request.data['username'])
+        managers = Group.objects.get(name='Manager')
+        managers.user_set.add(user)
+        return Response({"message": f"{user.username} added to Manager group"}, status=status.HTTP_201_CREATED)
+
+    def destroy(self, request):
+        user = get_object_or_404(User, username=request.data['username'])
+        managers = Group.objects.get(name='Manager')
+        managers.user_set.remove(user)
+        return Response({"message": f"{user.username} removed from Manager group"}, status=status.HTTP_200_OK)
+
+class DeliveryCrewViewSet(viewsets.ViewSet):
+    permission_classes = [IsAdminUser | IsManager]
+    def list(self, request):
+        users = User.objects.all().filter(groups__name='Delivery Crew')
+        items = UserSerializer(users, many=True)
+        return Response(items.data)
+
+    def create(self, request):
+        user = get_object_or_404(User, username=request.data['username'])
+        crew = Group.objects.get(name='Delivery Crew')
+        crew.user_set.add(user)
+        return Response({"message": f"{user.username} added to Delivery Crew group"}, status=status.HTTP_201_CREATED)
+
+    def destroy(self, request):
+        user = get_object_or_404(User, username=request.data['username'])
+        crew = Group.objects.get(name='Delivery Crew')
+        crew.user_set.remove(user)
+        return Response({"message": f"{user.username} removed from Delivery Crew group"}, status=status.HTTP_200_OK)
