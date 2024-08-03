@@ -21,6 +21,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           source: ./
           target: /var/www/api
+          debug: true
 
       # - name: Set up environment and install dependencies
       #   run: |
