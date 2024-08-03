@@ -59,7 +59,7 @@ The API uses JWT for authentication. Users can obtain, refresh, and verify token
 ## Swagger Documentation
 You can explore the API documentation using Swagger UI:
 
-- **URL**: 'http://localhost:8000/swagger/'
+- **URL**: `http://localhost:8000/swagger/`
 - **Description**: Swagger UI provides interactive documentation for exploring the endpoints and testing the API directly from your browser.
 
 ## Request and Response Formats
@@ -137,9 +137,9 @@ python manage.py migrate
 python manage.py runserver
 ```
 - Access the API
-  - you can now access the API at 'http://localhost:8000/api/v1/'
-  - if you access localhost:8000 it will redirect to - 'http://localhost:8000/api/v1/'
-  - you can also use swagger endpoints to try the api **effectly** - 'http://localhost:8000/swagger/'
+  - you can now access the API at `http://localhost:8000/api/v1/`
+  - if you access localhost:8000 it will redirect to - `http://localhost:8000/api/v1/`
+  - you can also use swagger endpoints to try the api **effectly** - `http://localhost:8000/swagger/`
 
 ## Error Handling
 - The API returns appropriate HTTP status codes for different types of errors.
@@ -164,5 +164,5 @@ python manage.py test
 - For more help - [Deploy Django](https://docs.djangoproject.com/en/5.0/howto/deployment/)
 
 ## Additional Information
-- Authentication: This API does not require authentication.
-- User Management: This API does not support user management.
+- Authentication: This API requires authentication.
+- User Management: This API supports user management.
