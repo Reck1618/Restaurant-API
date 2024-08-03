@@ -1,0 +1,54 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Copy files to VM
+        run: |
+          rsync -avz --progress ./* ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/api
+
+      # - name: Set up environment and install dependencies
+      #   run: |
+      #     ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+      #     cd /var/www/automation-dashboard
+      #     if [ ! -d "env" ]; then
+      #         python3 -m venv env
+      #     fi
+      #     source env/bin/activate
+      #     pip install -r requirements.txt
+      #     EOF
+
+      # - name: Run Django management commands
+      #   run: |
+      #     ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+      #     cd /var/www/automation-dashboard
+      #     source env/bin/activate
+      #     python manage.py makemigrations --no-input
+      #     python manage.py migrate --no-input
+      #     python manage.py collectstatic --no-input
+      #     EOF
+
+      # - name: Restart Services
+      #   run: |
+      #     ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+      #     sudo systemctl restart gunicorn
+      #     sudo systemctl restart daphne
+      #     sudo systemctl restart celery-worker
+      #     # sudo systemctl restart celery-beat
+      #     sudo systemctl restart nginx
+      #     EOF
