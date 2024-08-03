@@ -183,7 +183,7 @@ class SingleOrderView(generics.ListCreateAPIView):
         if request.method in ['GET']:
             self.permission_classes = [IsAuthenticated]
         elif request.method in ['PUT', 'DELETE']:
-            self.permission_classes = [IsManager | IsAdminUser]
+            self.permission_classes = [IsAuthenticated, IsManager | IsAdminUser]
         else:
             self.permission_classes = [IsDeliveryCrew | IsAdminUser | IsManager]
         return super().check_permissions(request)
