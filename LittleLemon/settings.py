@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-sx03i*8xpg!1k=@*n*i1ae$3g9e^0^x8ib$5!n@bi^x1_iyg(a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['little-lemon.ritiktyagi.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -123,7 +123,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -161,3 +163,4 @@ SIMPLE_JWT = {
 DJOSER = {
     "USER_ID_FIELD": "username",
 }
+
