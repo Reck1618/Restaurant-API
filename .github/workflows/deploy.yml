@@ -1,4 +1,4 @@
-name: Deploy Little Lemon API
+name: Build and Deploy to Droplet
 
 on: [push]
 
@@ -9,31 +9,31 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Add Droplet to known_hosts
-        run: |
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16' 
 
-      - name: Copy files via SSH
-        uses: appleboy/scp-action@v0.1.1
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      - name: Deploy to Droplet
+        uses: appleboy/scp-action@v0.1.5
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: "."
-          target: "/var/www/little-lemon"
-        
-    # - name: Execute commands via SSH
-    #   uses: appleboy/ssh-action@master
-    #   with:
-    #     host: ${{ secrets.DROPLET_IP }}
-    #     username: ${{ secrets.DROPLET_USER }}
-    #     key: ${{ secrets.DROPLET_KEY }}
-    #     script: |
-    #       cd /path/to/your/project
-    #       python -m venv venv
-    #       source venv/bin/activate
-    #       pip install -r requirements.txt
-    #       python manage.py migrate
-    #       python manage.py collectstatic --noinput
-    #       systemctl restart gunicorn  # Assuming you're using systemd for Gunicorn
-    #       systemctl restart nginx
+          source: ./
+          target: /var/www/little-lemon
+
+      - name: Restart Nginx
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            sudo systemctl reload nginx
