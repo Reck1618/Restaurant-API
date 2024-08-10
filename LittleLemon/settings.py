@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-sx03i*8xpg!1k=@*n*i1ae$3g9e^0^x8ib$5!n@bi^x1_iyg(a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['api-lemon.ritiktyagi.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['api-lemon.ritiktyagi.codes', 'localhost', '127.0.0.1']
 
 
 # Application definition
