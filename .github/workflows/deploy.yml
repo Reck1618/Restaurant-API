@@ -16,7 +16,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           source: ./
-          target: /var/www/little-lemon
+          target: /var/www/api-lemon
 
       - name: Set up environment and install dependencies
         uses: appleboy/ssh-action@master
@@ -25,7 +25,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /var/www/little-lemon || exit
+            cd /var/www/api-lemon || exit
             if [ ! -d "env" ]; then
                 python3 -m venv env
             fi
@@ -40,7 +40,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /var/www/little-lemon
+            cd /var/www/api-lemon
             source env/bin/activate
             python manage.py makemigrations --no-input
             python manage.py migrate --no-input
