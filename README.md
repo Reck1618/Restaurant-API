@@ -62,6 +62,12 @@ You can explore the API documentation using Swagger UI:
 - **URL**: `http://localhost:8000/swagger/`
 - **Description**: Swagger UI provides interactive documentation for exploring the endpoints and testing the API directly from your browser.
 
+## HTML Views
+You can also explore the API using the HTML views:
+
+- **URL**: `http://localhost:8000/api/v1/`
+- **Description**: The HTML views provide a user-friendly interface to interact with the API endpoints directly from your browser.
+
 ## Request and Response Formats
 - Requests should be in JSON format.
 - Responses will be in JSON format.
